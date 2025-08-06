@@ -317,13 +317,6 @@ export function ImageEditorDialog({
                 </CollapsibleContent>
               </Collapsible>
 
-              {/* Original Size Info */}
-              <div className="pt-4 border-t space-y-2">
-                <div className="text-sm font-medium">Original Size</div>
-                <div className="text-sm text-muted-foreground">
-                  {originalDimensions.width} × {originalDimensions.height} pixels
-                </div>
-              </div>
             </div>
           </div>
         </div>
