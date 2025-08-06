@@ -156,50 +156,85 @@ export function ImageEditorDialog({
     }
   };
 
-  // Generate chess pattern style for expanded areas
-  const getChessPatternStyle = () => {
-    const origW = originalDimensions.width;
-    const origH = originalDimensions.height;
-    const targetW = targetDimensions.width;
-    const targetH = targetDimensions.height;
-    const scaleX = targetW / origW;
-    const scaleY = targetH / origH;
-    return {
-      backgroundImage: `
-        linear-gradient(45deg, #ccc 25%, transparent 25%), 
-        linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-        linear-gradient(45deg, transparent 75%, #ccc 75%), 
-        linear-gradient(-45deg, transparent 75%, #ccc 75%)
-      `,
-      backgroundSize: '20px 20px',
-      backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
-    };
+  // Calculate canvas preview dimensions for display
+  const getCanvasPreviewDimensions = () => {
+    const maxDisplaySize = 400;
+    const aspectRatio = targetDimensions.width / targetDimensions.height;
+    
+    let displayWidth, displayHeight;
+    if (aspectRatio > 1) {
+      displayWidth = Math.min(maxDisplaySize, targetDimensions.width);
+      displayHeight = displayWidth / aspectRatio;
+    } else {
+      displayHeight = Math.min(maxDisplaySize, targetDimensions.height);
+      displayWidth = displayHeight * aspectRatio;
+    }
+    
+    return { displayWidth, displayHeight };
+  };
+
+  // Calculate image positioning within canvas
+  const getImagePositioning = () => {
+    const { displayWidth, displayHeight } = getCanvasPreviewDimensions();
+    const origAspect = originalDimensions.width / originalDimensions.height;
+    
+    let imageDisplayWidth, imageDisplayHeight;
+    if (origAspect > 1) {
+      imageDisplayWidth = Math.min(displayWidth, displayHeight * origAspect);
+      imageDisplayHeight = imageDisplayWidth / origAspect;
+    } else {
+      imageDisplayHeight = Math.min(displayHeight, displayWidth / origAspect);
+      imageDisplayWidth = imageDisplayHeight * origAspect;
+    }
+    
+    return { imageDisplayWidth, imageDisplayHeight };
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl w-full h-[80vh] p-0 gap-0">
         <div className="flex h-full">
           {/* Left side - Canvas (60%) */}
           <div className="flex-1 relative flex items-center justify-center bg-slate-100 p-8">
-            
-
-            <div className="relative">
-              {/* Chess pattern background for expanded areas */}
-              <div className="absolute inset-0 -m-16 opacity-50" style={{
-              ...getChessPatternStyle(),
-              width: `${targetDimensions.width / originalDimensions.width * 100}%`,
-              height: `${targetDimensions.height / originalDimensions.height * 100}%`,
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              maxWidth: '400px',
-              maxHeight: '400px'
-            }} />
+            {(() => {
+              const { displayWidth, displayHeight } = getCanvasPreviewDimensions();
+              const { imageDisplayWidth, imageDisplayHeight } = getImagePositioning();
               
-              {/* Original image */}
-              <img src={image.src} alt={image.alt} className="relative z-10 max-w-[400px] max-h-[400px] object-contain" style={{
-              boxShadow: '0 0 0 2px rgba(0,0,0,0.1)'
-            }} />
-            </div>
+              return (
+                <div className="relative">
+                  {/* Canvas container with target dimensions */}
+                  <div 
+                    className="relative border-2 border-dashed border-gray-400 bg-white"
+                    style={{
+                      width: displayWidth,
+                      height: displayHeight,
+                      backgroundImage: `
+                        linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+                      `,
+                      backgroundSize: '20px 20px',
+                      backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                    }}
+                  >
+                    {/* Original image centered within canvas */}
+                    <img 
+                      src={image.src} 
+                      alt={image.alt} 
+                      className="absolute"
+                      style={{
+                        width: imageDisplayWidth,
+                        height: imageDisplayHeight,
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        objectFit: 'contain',
+                        border: '2px solid rgba(0,0,0,0.1)'
+                      }} 
+                    />
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Dimension display */}
             <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
