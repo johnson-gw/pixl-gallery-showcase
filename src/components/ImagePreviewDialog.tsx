@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Download, Wand2, Copy, Settings, X, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { ImageEditorDialog } from "./ImageEditorDialog";
 interface ImagePreviewDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -26,6 +28,7 @@ export function ImagePreviewDialog({
   onPrevious,
   onNext
 }: ImagePreviewDialogProps) {
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const handleDownload = () => {
     const link = document.createElement('a');
     link.href = image.src;
@@ -128,7 +131,10 @@ export function ImagePreviewDialog({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button className="w-full shadow-[var(--shadow-button)]">
+                    <Button 
+                      className="w-full shadow-[var(--shadow-button)]"
+                      onClick={() => setIsEditorOpen(true)}
+                    >
                       <Wand2 className="w-4 h-4 mr-2" />
                       Edit Image
                       <Info className="w-3 h-3 ml-2" />
@@ -167,5 +173,11 @@ export function ImagePreviewDialog({
           </div>
         </div>
       </DialogContent>
+      
+      <ImageEditorDialog
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        image={image}
+      />
     </Dialog>;
 }
