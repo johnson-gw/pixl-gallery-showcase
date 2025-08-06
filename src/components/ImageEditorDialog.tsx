@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 interface ImageEditorDialogProps {
   isOpen: boolean;
@@ -62,6 +63,8 @@ export function ImageEditorDialog({
 }: ImageEditorDialogProps) {
   const [isAspectRatioOpen, setIsAspectRatioOpen] = useState(true);
   const [isCustomSizeOpen, setIsCustomSizeOpen] = useState(false);
+  const [isEraseOpen, setIsEraseOpen] = useState(false);
+  const [isGenerativeFillOpen, setIsGenerativeFillOpen] = useState(false);
   const [selectedRatio, setSelectedRatio] = useState<AspectRatioOption>(aspectRatios[0]);
   const [originalDimensions, setOriginalDimensions] = useState({
     width: 512,
@@ -144,17 +147,40 @@ export function ImageEditorDialog({
     });
   };
 
-  // Toggle sections
+  // Toggle sections - only one can be open at a time
   const handleAspectRatioToggle = () => {
     setIsAspectRatioOpen(!isAspectRatioOpen);
     if (!isAspectRatioOpen) {
       setIsCustomSizeOpen(false);
+      setIsEraseOpen(false);
+      setIsGenerativeFillOpen(false);
     }
   };
+  
   const handleCustomSizeToggle = () => {
     setIsCustomSizeOpen(!isCustomSizeOpen);
     if (!isCustomSizeOpen) {
       setIsAspectRatioOpen(false);
+      setIsEraseOpen(false);
+      setIsGenerativeFillOpen(false);
+    }
+  };
+  
+  const handleEraseToggle = () => {
+    setIsEraseOpen(!isEraseOpen);
+    if (!isEraseOpen) {
+      setIsAspectRatioOpen(false);
+      setIsCustomSizeOpen(false);
+      setIsGenerativeFillOpen(false);
+    }
+  };
+  
+  const handleGenerativeFillToggle = () => {
+    setIsGenerativeFillOpen(!isGenerativeFillOpen);
+    if (!isGenerativeFillOpen) {
+      setIsAspectRatioOpen(false);
+      setIsCustomSizeOpen(false);
+      setIsEraseOpen(false);
     }
   };
 
@@ -253,69 +279,123 @@ export function ImageEditorDialog({
               <h2 className="text-lg font-semibold">Edit Image</h2>
             </div>
 
-            <div className="space-y-4 flex-1">
-              {/* Aspect Ratio Section */}
-              <Collapsible open={isAspectRatioOpen} onOpenChange={handleAspectRatioToggle}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between p-0 h-auto">
-                    <span className="text-base font-medium">Aspect Ratio</span>
-                    {isAspectRatioOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-4">
-                  <div className="grid grid-cols-3 gap-2">
-                    {aspectRatios.map(ratio => <Button key={ratio.label} variant={selectedRatio.label === ratio.label ? "default" : "outline"} size="sm" onClick={() => handleRatioSelect(ratio)} className="text-xs">
-                        {ratio.label}
-                      </Button>)}
-                  </div>
-                  <Button 
-                    className="w-full"
-                    onClick={() => {
-                      onExpand(targetDimensions, image);
-                      onClose();
-                    }}
-                  >
-                    Expand Image
-                  </Button>
-                </CollapsibleContent>
-              </Collapsible>
+            <div className="space-y-6 flex-1">
+              {/* Resize Section */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Resize</h3>
+                  <Separator />
+                </div>
+                
+                {/* Aspect Ratio Section */}
+                <Collapsible open={isAspectRatioOpen} onOpenChange={handleAspectRatioToggle}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                      <span className="text-base font-medium">Aspect Ratio</span>
+                      {isAspectRatioOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-4">
+                    <div className="grid grid-cols-3 gap-2">
+                      {aspectRatios.map(ratio => <Button key={ratio.label} variant={selectedRatio.label === ratio.label ? "default" : "outline"} size="sm" onClick={() => handleRatioSelect(ratio)} className="text-xs">
+                          {ratio.label}
+                        </Button>)}
+                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={() => {
+                        onExpand(targetDimensions, image);
+                        onClose();
+                      }}
+                    >
+                      Expand Image
+                    </Button>
+                  </CollapsibleContent>
+                </Collapsible>
 
-              {/* Custom Size Section */}
-              <Collapsible open={isCustomSizeOpen} onOpenChange={handleCustomSizeToggle}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between p-0 h-auto">
-                    <span className="text-base font-medium">Custom Size</span>
-                    {isCustomSizeOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Width</label>
-                      <div className="flex items-center gap-2">
-                        <Input type="number" value={customWidth} onChange={e => handleCustomSizeChange(parseInt(e.target.value) || 0, customHeight)} className="flex-1" />
-                        <span className="text-sm text-muted-foreground">px</span>
+                {/* Custom Size Section */}
+                <Collapsible open={isCustomSizeOpen} onOpenChange={handleCustomSizeToggle}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                      <span className="text-base font-medium">Custom Size</span>
+                      {isCustomSizeOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Width</label>
+                        <div className="flex items-center gap-2">
+                          <Input type="number" value={customWidth} onChange={e => handleCustomSizeChange(parseInt(e.target.value) || 0, customHeight)} className="flex-1" />
+                          <span className="text-sm text-muted-foreground">px</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Height</label>
+                        <div className="flex items-center gap-2">
+                          <Input type="number" value={customHeight} onChange={e => handleCustomSizeChange(customWidth, parseInt(e.target.value) || 0)} className="flex-1" />
+                          <span className="text-sm text-muted-foreground">px</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Height</label>
-                      <div className="flex items-center gap-2">
-                        <Input type="number" value={customHeight} onChange={e => handleCustomSizeChange(customWidth, parseInt(e.target.value) || 0)} className="flex-1" />
-                        <span className="text-sm text-muted-foreground">px</span>
-                      </div>
+                    <Button 
+                      className="w-full"
+                      onClick={() => {
+                        onExpand({ width: customWidth, height: customHeight }, image);
+                        onClose();
+                      }}
+                    >
+                      Expand Image
+                    </Button>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+
+              {/* Content Editing Section */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground">Content Editing</h3>
+                  <Separator />
+                </div>
+                
+                {/* Erase Section */}
+                <Collapsible open={isEraseOpen} onOpenChange={handleEraseToggle}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                      <span className="text-base font-medium">Erase</span>
+                      {isEraseOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-4">
+                    <div className="text-sm text-muted-foreground">
+                      Remove objects from your image by masking them while preserving the background.
                     </div>
-                  </div>
-                  <Button 
-                    className="w-full"
-                    onClick={() => {
-                      onExpand({ width: customWidth, height: customHeight }, image);
-                      onClose();
-                    }}
-                  >
-                    Expand Image
-                  </Button>
-                </CollapsibleContent>
-              </Collapsible>
+                    {/* Placeholder for erase functionality */}
+                    <div className="h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                      <span className="text-sm text-muted-foreground">Erase tools will be available here</span>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {/* Generative Fill Section */}
+                <Collapsible open={isGenerativeFillOpen} onOpenChange={handleGenerativeFillToggle}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                      <span className="text-base font-medium">Generative Fill</span>
+                      {isGenerativeFillOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-4">
+                    <div className="text-sm text-muted-foreground">
+                      Add new content to selected areas using AI, maintaining the overall image context.
+                    </div>
+                    {/* Placeholder for generative fill functionality */}
+                    <div className="h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                      <span className="text-sm text-muted-foreground">Generative fill tools will be available here</span>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
 
             </div>
           </div>
