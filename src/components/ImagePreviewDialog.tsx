@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Download, Wand2, Copy, Settings, X, ChevronLeft, ChevronRight, Info } from "lucide-react";
+
 interface ImagePreviewDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,12 +20,13 @@ interface ImagePreviewDialogProps {
   onPrevious: () => void;
   onNext: () => void;
 }
-export function ImagePreviewDialog({
-  isOpen,
-  onClose,
-  image,
-  onPrevious,
-  onNext
+
+export function ImagePreviewDialog({ 
+  isOpen, 
+  onClose, 
+  image, 
+  onPrevious, 
+  onNext 
 }: ImagePreviewDialogProps) {
   const handleDownload = () => {
     const link = document.createElement('a');
@@ -32,27 +34,51 @@ export function ImagePreviewDialog({
     link.download = `image-${image.id}.jpg`;
     link.click();
   };
+
   const handleCopyPrompt = () => {
     if (image.prompt) {
       navigator.clipboard.writeText(image.prompt);
     }
   };
-  return <Dialog open={isOpen} onOpenChange={onClose}>
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl w-full h-[60vh] p-0 gap-0">
         <div className="flex h-full">
           {/* Left side - Image (60%) */}
-          <div className="flex-1 relative flex items-center justify-center bg-slate-100">
+          <div className="flex-1 relative bg-black flex items-center justify-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-4 top-4 z-10 bg-black/50 hover:bg-black/70 text-white"
+              onClick={onClose}
+            >
+              <X className="w-4 h-4" />
+            </Button>
             
-            
-            <Button variant="ghost" size="icon" className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white" onClick={onPrevious}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white"
+              onClick={onPrevious}
+            >
               <ChevronLeft className="w-5 h-5" />
             </Button>
 
-            <Button variant="ghost" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white" onClick={onNext}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white"
+              onClick={onNext}
+            >
               <ChevronRight className="w-5 h-5" />
             </Button>
 
-            <img src={image.src} alt={image.alt} className="max-w-full max-h-full object-contain" />
+            <img
+              src={image.src}
+              alt={image.alt}
+              className="max-w-full max-h-full object-contain"
+            />
           </div>
 
           {/* Right side - Details (40%) */}
@@ -72,8 +98,17 @@ export function ImagePreviewDialog({
                   <span className="text-sm font-medium">Image Description / Prompt</span>
                 </div>
                 <div className="relative">
-                  <textarea value={image.prompt || image.alt} readOnly className="w-full h-20 p-3 bg-muted rounded-lg border resize-none text-sm" />
-                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 w-6 h-6" onClick={handleCopyPrompt}>
+                  <textarea
+                    value={image.prompt || image.alt}
+                    readOnly
+                    className="w-full h-20 p-3 bg-muted rounded-lg border resize-none text-sm"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 w-6 h-6"
+                    onClick={handleCopyPrompt}
+                  >
                     <Copy className="w-3 h-3" />
                   </Button>
                 </div>
@@ -167,5 +202,6 @@ export function ImagePreviewDialog({
           </div>
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 }
