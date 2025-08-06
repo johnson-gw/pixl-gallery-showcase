@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ImageIcon, Sparkles } from "lucide-react";
+import { ImagePreviewDialog } from "./ImagePreviewDialog";
 
 // Import gallery images
 import gallerySunset from "@/assets/gallery-sunset.jpg";
@@ -18,13 +19,13 @@ import galleryClimate from "@/assets/gallery-climate.jpg";
 import galleryArctic from "@/assets/gallery-arctic.jpg";
 
 const galleryImages = [
-  { id: 1, src: gallerySunset, alt: "Mountain sunset landscape" },
-  { id: 2, src: galleryFairy, alt: "Anime fairy character" },
-  { id: 3, src: galleryRenewable, alt: "Renewable energy technology" },
-  { id: 4, src: galleryScientists, alt: "Environmental research" },
-  { id: 5, src: galleryEarth, alt: "Environmental protection" },
-  { id: 6, src: galleryClimate, alt: "Climate data visualization" },
-  { id: 7, src: galleryArctic, alt: "Arctic glaciers" },
+  { id: 1, src: gallerySunset, alt: "Mountain sunset landscape", prompt: "A beautiful sunset landscape with mountains reflected in calm water, dramatic orange and purple sky, serene and peaceful atmosphere", aspectRatio: "Square", quality: "Basic", model: "Model C", created: "Jul 26, 2025 at 20:29" },
+  { id: 2, src: galleryFairy, alt: "Anime fairy character", prompt: "Cute anime-style fairy character with colorful wings, magical sparkles, cheerful expression, kawaii style", aspectRatio: "Square", quality: "Basic", model: "Model C", created: "Jul 26, 2025 at 20:30" },
+  { id: 3, src: galleryRenewable, alt: "Renewable energy technology", prompt: "Modern wind farm with solar panels, sustainable energy technology, green environment, blue sky with clouds", aspectRatio: "Square", quality: "Basic", model: "Model C", created: "Jul 26, 2025 at 20:31" },
+  { id: 4, src: galleryScientists, alt: "Environmental research", prompt: "Scientists conducting environmental research, laboratory setting, scientific equipment, professional atmosphere", aspectRatio: "Square", quality: "Basic", model: "Model C", created: "Jul 26, 2025 at 20:32" },
+  { id: 5, src: galleryEarth, alt: "Environmental protection", prompt: "Hands holding a green plant with Earth globe, environmental protection concept, sustainability theme", aspectRatio: "Square", quality: "Basic", model: "Model C", created: "Jul 26, 2025 at 20:33" },
+  { id: 6, src: galleryClimate, alt: "Climate data visualization", prompt: "Global climate change visualization with world map, data displays, environmental monitoring interface", aspectRatio: "Square", quality: "Basic", model: "Model C", created: "Jul 26, 2025 at 20:34" },
+  { id: 7, src: galleryArctic, alt: "Arctic glaciers", prompt: "Arctic landscape with glaciers and icebergs, climate awareness theme, pristine white and blue colors", aspectRatio: "Square", quality: "Basic", model: "Model C", created: "Jul 26, 2025 at 20:35" },
 ];
 
 export default function ImageGenerator() {
@@ -33,6 +34,7 @@ export default function ImageGenerator() {
   const [aspectRatio, setAspectRatio] = useState("Square");
   const [activeTab, setActiveTab] = useState("General");
   const [galleryTab, setGalleryTab] = useState("Gallery");
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   const handleGenerateImage = () => {
     console.log("Generating image with:", { imageType, prompt, aspectRatio });
@@ -41,6 +43,26 @@ export default function ImageGenerator() {
   const handleReset = () => {
     setPrompt("");
     setAspectRatio("Square");
+  };
+
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+  };
+
+  const handleClosePreview = () => {
+    setSelectedImageIndex(null);
+  };
+
+  const handlePreviousImage = () => {
+    if (selectedImageIndex !== null) {
+      setSelectedImageIndex(selectedImageIndex === 0 ? galleryImages.length - 1 : selectedImageIndex - 1);
+    }
+  };
+
+  const handleNextImage = () => {
+    if (selectedImageIndex !== null) {
+      setSelectedImageIndex(selectedImageIndex === galleryImages.length - 1 ? 0 : selectedImageIndex + 1);
+    }
   };
 
   return (
@@ -164,8 +186,12 @@ export default function ImageGenerator() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {galleryImages.map((image) => (
-                  <Card key={image.id} className="overflow-hidden group cursor-pointer hover:scale-105 transition-transform duration-200 shadow-[var(--shadow-card)]">
+                {galleryImages.map((image, index) => (
+                  <Card 
+                    key={image.id} 
+                    className="overflow-hidden group cursor-pointer hover:scale-105 transition-transform duration-200 shadow-[var(--shadow-card)]"
+                    onClick={() => handleImageClick(index)}
+                  >
                     <div className="aspect-square relative">
                       <img
                         src={image.src}
@@ -180,6 +206,17 @@ export default function ImageGenerator() {
             </TabsContent>
           </Tabs>
         </Card>
+
+        {/* Image Preview Dialog */}
+        {selectedImageIndex !== null && (
+          <ImagePreviewDialog
+            isOpen={selectedImageIndex !== null}
+            onClose={handleClosePreview}
+            image={galleryImages[selectedImageIndex]}
+            onPrevious={handlePreviousImage}
+            onNext={handleNextImage}
+          />
+        )}
       </div>
     </div>
   );
