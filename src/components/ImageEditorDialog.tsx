@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +76,14 @@ export function ImageEditorDialog({
   });
   const [customWidth, setCustomWidth] = useState(512);
   const [customHeight, setCustomHeight] = useState(512);
+  
+  // Erase feature state
+  const [isMasking, setIsMasking] = useState(false);
+  const [maskPaths, setMaskPaths] = useState<Array<{x: number, y: number}[]>>([]);
+  const [currentPath, setCurrentPath] = useState<{x: number, y: number}[]>([]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [brushPosition, setBrushPosition] = useState({ x: 0, y: 0, visible: false });
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   // Load image to get original dimensions
   useEffect(() => {
@@ -172,6 +180,14 @@ export function ImageEditorDialog({
       setIsAspectRatioOpen(false);
       setIsCustomSizeOpen(false);
       setIsGenerativeFillOpen(false);
+      // Reset canvas to original dimensions when switching to Erase
+      setTargetDimensions(originalDimensions);
+      setCustomWidth(originalDimensions.width);
+      setCustomHeight(originalDimensions.height);
+      // Clear any existing masks
+      setMaskPaths([]);
+      setCurrentPath([]);
+      setIsMasking(false);
     }
   };
   
@@ -217,6 +233,77 @@ export function ImageEditorDialog({
     
     return { imageDisplayWidth, imageDisplayHeight };
   };
+
+  // Erase feature handlers
+  const handleStartMasking = () => {
+    setIsMasking(!isMasking);
+    if (isMasking) {
+      setBrushPosition(prev => ({ ...prev, visible: false }));
+    }
+  };
+
+  const handleClearMask = () => {
+    setMaskPaths([]);
+    setCurrentPath([]);
+  };
+
+  const handleErase = () => {
+    onExpand(targetDimensions, { ...image, maskPaths });
+    onClose();
+  };
+
+  const hasMask = maskPaths.length > 0;
+
+  // Canvas mouse event handlers
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!canvasRef.current) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    if (isMasking) {
+      setBrushPosition({ x, y, visible: true });
+      
+      if (isDrawing) {
+        setCurrentPath(prev => [...prev, { x, y }]);
+      }
+    }
+  }, [isMasking, isDrawing]);
+
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!isMasking) return;
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setIsDrawing(true);
+    setCurrentPath([{ x, y }]);
+  }, [isMasking]);
+
+  const handleCanvasMouseUp = useCallback(() => {
+    if (!isMasking || !isDrawing) return;
+    
+    setIsDrawing(false);
+    if (currentPath.length > 0) {
+      setMaskPaths(prev => [...prev, currentPath]);
+      setCurrentPath([]);
+    }
+  }, [isMasking, isDrawing, currentPath]);
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    setBrushPosition(prev => ({ ...prev, visible: false }));
+    if (isDrawing) {
+      setIsDrawing(false);
+      if (currentPath.length > 0) {
+        setMaskPaths(prev => [...prev, currentPath]);
+        setCurrentPath([]);
+      }
+    }
+  }, [isDrawing, currentPath]);
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl w-full h-[80vh] p-0 gap-0">
         <div className="flex h-full">
@@ -230,7 +317,8 @@ export function ImageEditorDialog({
                 <div className="relative">
                   {/* Canvas container with target dimensions */}
                   <div 
-                    className="relative border-2 border-dashed border-gray-400 bg-white"
+                    ref={canvasRef}
+                    className="relative border-2 border-dashed border-gray-400 bg-white cursor-crosshair"
                     style={{
                       width: displayWidth,
                       height: displayHeight,
@@ -243,12 +331,16 @@ export function ImageEditorDialog({
                       backgroundSize: '20px 20px',
                       backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
                     }}
+                    onMouseMove={handleCanvasMouseMove}
+                    onMouseDown={handleCanvasMouseDown}
+                    onMouseUp={handleCanvasMouseUp}
+                    onMouseLeave={handleCanvasMouseLeave}
                   >
                     {/* Original image centered within canvas */}
                     <img 
                       src={image.src} 
                       alt={image.alt} 
-                      className="absolute"
+                      className="absolute pointer-events-none"
                       style={{
                         width: imageDisplayWidth,
                         height: imageDisplayHeight,
@@ -259,6 +351,70 @@ export function ImageEditorDialog({
                         border: '2px solid rgba(0,0,0,0.1)'
                       }} 
                     />
+
+                    {/* Mask overlay */}
+                    <svg 
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ width: '100%', height: '100%' }}
+                    >
+                      {/* Completed mask paths */}
+                      {maskPaths.map((path, pathIndex) => (
+                        <g key={pathIndex}>
+                          <path
+                            d={`M ${path.map(point => `${point.x},${point.y}`).join(' L ')}`}
+                            stroke="rgba(255, 99, 132, 0.8)"
+                            strokeWidth="20"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                          <path
+                            d={`M ${path.map(point => `${point.x},${point.y}`).join(' L ')}`}
+                            stroke="rgba(255, 99, 132, 0.3)"
+                            strokeWidth="16"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        </g>
+                      ))}
+                      
+                      {/* Current drawing path */}
+                      {currentPath.length > 1 && (
+                        <g>
+                          <path
+                            d={`M ${currentPath.map(point => `${point.x},${point.y}`).join(' L ')}`}
+                            stroke="rgba(255, 99, 132, 0.8)"
+                            strokeWidth="20"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                          <path
+                            d={`M ${currentPath.map(point => `${point.x},${point.y}`).join(' L ')}`}
+                            stroke="rgba(255, 99, 132, 0.3)"
+                            strokeWidth="16"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        </g>
+                      )}
+                    </svg>
+
+                    {/* Brush cursor */}
+                    {isMasking && brushPosition.visible && (
+                      <div
+                        className="absolute pointer-events-none border-2 border-red-400 rounded-full"
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          left: brushPosition.x - 10,
+                          top: brushPosition.y - 10,
+                          backgroundColor: 'rgba(255, 99, 132, 0.2)'
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               );
@@ -370,9 +526,36 @@ export function ImageEditorDialog({
                     <div className="text-sm text-muted-foreground">
                       Remove objects from your image by masking them while preserving the background.
                     </div>
-                    {/* Placeholder for erase functionality */}
-                    <div className="h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
-                      <span className="text-sm text-muted-foreground">Erase tools will be available here</span>
+                    
+                    {/* Masking controls */}
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <Button
+                          variant={isMasking ? "default" : "outline"}
+                          size="sm"
+                          onClick={handleStartMasking}
+                          className="flex-1"
+                        >
+                          {isMasking ? "Stop Masking" : "Start Masking"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleClearMask}
+                          disabled={!hasMask}
+                          className="flex-1"
+                        >
+                          Clear Mask
+                        </Button>
+                      </div>
+                      
+                      <Button
+                        className="w-full"
+                        onClick={handleErase}
+                        disabled={!hasMask}
+                      >
+                        Erase
+                      </Button>
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
