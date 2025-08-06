@@ -43,7 +43,7 @@ export function ImagePreviewDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl w-full h-[80vh] p-0 gap-0">
+      <DialogContent className="max-w-7xl w-full h-[60vh] p-0 gap-0">
         <div className="flex h-full">
           {/* Left side - Image (60%) */}
           <div className="flex-1 relative bg-black flex items-center justify-center">
