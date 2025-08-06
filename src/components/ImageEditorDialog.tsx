@@ -17,6 +17,7 @@ interface ImageEditorDialogProps {
     model?: string;
     created?: string;
   };
+  onExpand: (targetDimensions: { width: number; height: number }, originalImage: any) => void;
 }
 interface AspectRatioOption {
   label: string;
@@ -56,7 +57,8 @@ const aspectRatios: AspectRatioOption[] = [{
 export function ImageEditorDialog({
   isOpen,
   onClose,
-  image
+  image,
+  onExpand
 }: ImageEditorDialogProps) {
   const [isAspectRatioOpen, setIsAspectRatioOpen] = useState(true);
   const [isCustomSizeOpen, setIsCustomSizeOpen] = useState(false);
@@ -266,7 +268,13 @@ export function ImageEditorDialog({
                         {ratio.label}
                       </Button>)}
                   </div>
-                  <Button className="w-full">
+                  <Button 
+                    className="w-full"
+                    onClick={() => {
+                      onExpand(targetDimensions, image);
+                      onClose();
+                    }}
+                  >
                     Expand Image
                   </Button>
                 </CollapsibleContent>
@@ -297,7 +305,13 @@ export function ImageEditorDialog({
                       </div>
                     </div>
                   </div>
-                  <Button className="w-full">
+                  <Button 
+                    className="w-full"
+                    onClick={() => {
+                      onExpand({ width: customWidth, height: customHeight }, image);
+                      onClose();
+                    }}
+                  >
                     Expand Image
                   </Button>
                 </CollapsibleContent>

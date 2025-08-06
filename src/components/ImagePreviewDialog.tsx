@@ -20,13 +20,15 @@ interface ImagePreviewDialogProps {
   };
   onPrevious: () => void;
   onNext: () => void;
+  onExpand: (targetDimensions: { width: number; height: number }, originalImage: any) => void;
 }
 export function ImagePreviewDialog({
   isOpen,
   onClose,
   image,
   onPrevious,
-  onNext
+  onNext,
+  onExpand
 }: ImagePreviewDialogProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const handleDownload = () => {
@@ -178,6 +180,7 @@ export function ImagePreviewDialog({
         isOpen={isEditorOpen}
         onClose={() => setIsEditorOpen(false)}
         image={image}
+        onExpand={onExpand}
       />
     </Dialog>;
 }

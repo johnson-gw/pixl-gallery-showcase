@@ -9,6 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { ImageIcon, Sparkles } from "lucide-react";
 import { ImagePreviewDialog } from "./ImagePreviewDialog";
 
+interface LoadingImage {
+  id: string;
+  queueNumber: number;
+  targetDimensions: { width: number; height: number };
+  originalImage: any;
+}
+
 // Import gallery images
 import gallerySunset from "@/assets/gallery-sunset.jpg";
 import galleryFairy from "@/assets/gallery-fairy.jpg";
@@ -35,6 +42,9 @@ export default function ImageGenerator() {
   const [activeTab, setActiveTab] = useState("General");
   const [galleryTab, setGalleryTab] = useState("Gallery");
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [loadingImages, setLoadingImages] = useState<LoadingImage[]>([]);
+  const [nextQueueNumber, setNextQueueNumber] = useState(1);
+  const [galleryImagesList, setGalleryImagesList] = useState(galleryImages);
 
   const handleGenerateImage = () => {
     console.log("Generating image with:", { imageType, prompt, aspectRatio });
@@ -55,14 +65,49 @@ export default function ImageGenerator() {
 
   const handlePreviousImage = () => {
     if (selectedImageIndex !== null) {
-      setSelectedImageIndex(selectedImageIndex === 0 ? galleryImages.length - 1 : selectedImageIndex - 1);
+      setSelectedImageIndex(selectedImageIndex === 0 ? galleryImagesList.length - 1 : selectedImageIndex - 1);
     }
   };
 
   const handleNextImage = () => {
     if (selectedImageIndex !== null) {
-      setSelectedImageIndex(selectedImageIndex === galleryImages.length - 1 ? 0 : selectedImageIndex + 1);
+      setSelectedImageIndex(selectedImageIndex === galleryImagesList.length - 1 ? 0 : selectedImageIndex + 1);
     }
+  };
+
+  const handleExpandImage = (targetDimensions: { width: number; height: number }, originalImage: any) => {
+    // Create new loading placeholder
+    const newLoadingImage: LoadingImage = {
+      id: `loading-${Date.now()}`,
+      queueNumber: nextQueueNumber,
+      targetDimensions,
+      originalImage,
+    };
+
+    // Add to loading array
+    setLoadingImages(prev => [...prev, newLoadingImage]);
+    setNextQueueNumber(prev => prev + 1);
+
+    // Close dialogs
+    setSelectedImageIndex(null);
+
+    // Simulate image generation after 5 seconds
+    setTimeout(() => {
+      // Remove from loading
+      setLoadingImages(prev => prev.filter(img => img.id !== newLoadingImage.id));
+      
+      // Create new expanded image
+      const expandedImage = {
+        ...originalImage,
+        id: Date.now(),
+        aspectRatio: `${targetDimensions.width}:${targetDimensions.height}`,
+        created: new Date().toLocaleDateString(),
+        prompt: `${originalImage.prompt} (expanded to ${targetDimensions.width}x${targetDimensions.height})`,
+      };
+
+      // Add to gallery at the beginning
+      setGalleryImagesList(prev => [expandedImage, ...prev]);
+    }, 5000);
   };
 
   return (
@@ -186,7 +231,25 @@ export default function ImageGenerator() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {galleryImages.map((image, index) => (
+                {/* Loading placeholders */}
+                {loadingImages.map((loadingImage) => (
+                  <Card key={loadingImage.id} className="overflow-hidden shadow-[var(--shadow-card)]">
+                    <div className="aspect-square bg-muted/50 flex flex-col items-center justify-center p-4">
+                      <div className="text-xs font-medium text-muted-foreground mb-2">
+                        Queue #{loadingImage.queueNumber}
+                      </div>
+                      <div className="text-sm font-medium mb-3">Generating Image</div>
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                        <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                
+                {/* Actual gallery images */}
+                {galleryImagesList.map((image, index) => (
                   <Card 
                     key={image.id} 
                     className="overflow-hidden group cursor-pointer hover:scale-105 transition-transform duration-200 shadow-[var(--shadow-card)]"
@@ -212,9 +275,10 @@ export default function ImageGenerator() {
           <ImagePreviewDialog
             isOpen={selectedImageIndex !== null}
             onClose={handleClosePreview}
-            image={galleryImages[selectedImageIndex]}
+            image={galleryImagesList[selectedImageIndex]}
             onPrevious={handlePreviousImage}
             onNext={handleNextImage}
+            onExpand={handleExpandImage}
           />
         )}
       </div>
