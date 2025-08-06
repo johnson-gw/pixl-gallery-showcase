@@ -2,8 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
@@ -86,9 +84,6 @@ export function ImageEditorDialog({
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushPosition, setBrushPosition] = useState({ x: 0, y: 0, visible: false });
   const canvasRef = useRef<HTMLDivElement>(null);
-
-  // Generative Fill state
-  const [generativeFillPrompt, setGenerativeFillPrompt] = useState("");
 
   // Load image to get original dimensions
   useEffect(() => {
@@ -202,15 +197,6 @@ export function ImageEditorDialog({
       setIsAspectRatioOpen(false);
       setIsCustomSizeOpen(false);
       setIsEraseOpen(false);
-      // Reset canvas to original dimensions when switching to Generative Fill
-      setTargetDimensions(originalDimensions);
-      setCustomWidth(originalDimensions.width);
-      setCustomHeight(originalDimensions.height);
-      // Clear any existing masks and prompt
-      setMaskPaths([]);
-      setCurrentPath([]);
-      setIsMasking(false);
-      setGenerativeFillPrompt("");
     }
   };
 
@@ -267,13 +253,6 @@ export function ImageEditorDialog({
   };
 
   const hasMask = maskPaths.length > 0;
-  const hasPrompt = generativeFillPrompt.trim().length > 0;
-
-  // Generative Fill handlers
-  const handleGenerate = () => {
-    onExpand(targetDimensions, { ...image, maskPaths, prompt: generativeFillPrompt });
-    onClose();
-  };
 
   // Canvas mouse event handlers
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
@@ -593,55 +572,9 @@ export function ImageEditorDialog({
                     <div className="text-sm text-muted-foreground">
                       Add new content to selected areas using AI, maintaining the overall image context.
                     </div>
-                    
-                    {/* Masking controls */}
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <Button
-                          variant={isMasking ? "default" : "outline"}
-                          size="sm"
-                          onClick={handleStartMasking}
-                          className="flex-1"
-                        >
-                          {isMasking ? "Stop Masking" : "Start Masking"}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleClearMask}
-                          disabled={!hasMask}
-                          className="flex-1"
-                        >
-                          Clear Mask
-                        </Button>
-                      </div>
-                      
-                      {/* Prompt textarea */}
-                      <div className="space-y-2">
-                        <div className="relative">
-                          <Textarea
-                            value={generativeFillPrompt}
-                            onChange={(e) => setGenerativeFillPrompt(e.target.value)}
-                            placeholder="Describe what you want to generate in the masked area..."
-                            className="w-full h-20 p-3 bg-muted rounded-lg border resize-none text-sm"
-                            maxLength={1000}
-                          />
-                          <Badge 
-                            variant="secondary" 
-                            className="absolute bottom-2 right-2 text-xs"
-                          >
-                            {generativeFillPrompt.length}/1000
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      <Button
-                        className="w-full"
-                        onClick={handleGenerate}
-                        disabled={!hasMask || !hasPrompt}
-                      >
-                        Generate
-                      </Button>
+                    {/* Placeholder for generative fill functionality */}
+                    <div className="h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                      <span className="text-sm text-muted-foreground">Generative fill tools will be available here</span>
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
