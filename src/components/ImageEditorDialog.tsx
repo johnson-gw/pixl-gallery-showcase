@@ -21,7 +21,10 @@ interface ImageEditorDialogProps {
     model?: string;
     created?: string;
   };
-  onExpand: (targetDimensions: { width: number; height: number }, originalImage: any) => void;
+  onExpand: (targetDimensions: {
+    width: number;
+    height: number;
+  }, originalImage: any) => void;
 }
 interface AspectRatioOption {
   label: string;
@@ -78,13 +81,23 @@ export function ImageEditorDialog({
   });
   const [customWidth, setCustomWidth] = useState(512);
   const [customHeight, setCustomHeight] = useState(512);
-  
+
   // Erase feature state
   const [isMasking, setIsMasking] = useState(false);
-  const [maskPaths, setMaskPaths] = useState<Array<{x: number, y: number}[]>>([]);
-  const [currentPath, setCurrentPath] = useState<{x: number, y: number}[]>([]);
+  const [maskPaths, setMaskPaths] = useState<Array<{
+    x: number;
+    y: number;
+  }[]>>([]);
+  const [currentPath, setCurrentPath] = useState<{
+    x: number;
+    y: number;
+  }[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [brushPosition, setBrushPosition] = useState({ x: 0, y: 0, visible: false });
+  const [brushPosition, setBrushPosition] = useState({
+    x: 0,
+    y: 0,
+    visible: false
+  });
   const [brushSize, setBrushSize] = useState<number>(20);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -169,7 +182,6 @@ export function ImageEditorDialog({
       setIsContentEditingOpen(false);
     }
   };
-  
   const handleCustomSizeToggle = () => {
     setIsCustomSizeOpen(!isCustomSizeOpen);
     if (!isCustomSizeOpen) {
@@ -177,7 +189,6 @@ export function ImageEditorDialog({
       setIsContentEditingOpen(false);
     }
   };
-  
   const handleContentEditingToggle = () => {
     setIsContentEditingOpen(!isContentEditingOpen);
     if (!isContentEditingOpen) {
@@ -199,7 +210,6 @@ export function ImageEditorDialog({
   const getCanvasPreviewDimensions = () => {
     const maxDisplaySize = 400;
     const aspectRatio = targetDimensions.width / targetDimensions.height;
-    
     let displayWidth, displayHeight;
     if (aspectRatio > 1) {
       displayWidth = Math.min(maxDisplaySize, targetDimensions.width);
@@ -208,15 +218,19 @@ export function ImageEditorDialog({
       displayHeight = Math.min(maxDisplaySize, targetDimensions.height);
       displayWidth = displayHeight * aspectRatio;
     }
-    
-    return { displayWidth, displayHeight };
+    return {
+      displayWidth,
+      displayHeight
+    };
   };
 
   // Calculate image positioning within canvas
   const getImagePositioning = () => {
-    const { displayWidth, displayHeight } = getCanvasPreviewDimensions();
+    const {
+      displayWidth,
+      displayHeight
+    } = getCanvasPreviewDimensions();
     const origAspect = originalDimensions.width / originalDimensions.height;
-    
     let imageDisplayWidth, imageDisplayHeight;
     if (origAspect > 1) {
       imageDisplayWidth = Math.min(displayWidth, displayHeight * origAspect);
@@ -225,79 +239,91 @@ export function ImageEditorDialog({
       imageDisplayHeight = Math.min(displayHeight, displayWidth / origAspect);
       imageDisplayWidth = imageDisplayHeight * origAspect;
     }
-    
-    return { imageDisplayWidth, imageDisplayHeight };
+    return {
+      imageDisplayWidth,
+      imageDisplayHeight
+    };
   };
 
   // Erase feature handlers
   const handleStartMasking = () => {
     setIsMasking(!isMasking);
     if (isMasking) {
-      setBrushPosition(prev => ({ ...prev, visible: false }));
+      setBrushPosition(prev => ({
+        ...prev,
+        visible: false
+      }));
     }
   };
-
   const handleClearMask = () => {
     setMaskPaths([]);
     setCurrentPath([]);
   };
-
   const handleErase = () => {
-    onExpand(targetDimensions, { ...image, maskPaths });
+    onExpand(targetDimensions, {
+      ...image,
+      maskPaths
+    });
     onClose();
   };
-
   const hasMask = maskPaths.length > 0;
   const hasPrompt = generativeFillPrompt.trim().length > 0;
 
   // Generative Fill handlers
   const handleGenerate = () => {
-    onExpand(targetDimensions, { ...image, maskPaths, prompt: generativeFillPrompt });
+    onExpand(targetDimensions, {
+      ...image,
+      maskPaths,
+      prompt: generativeFillPrompt
+    });
     onClose();
   };
 
   // Canvas mouse event handlers
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
     if (!canvasRef.current) return;
-    
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
     if (isMasking) {
-      setBrushPosition({ x, y, visible: true });
-      
+      setBrushPosition({
+        x,
+        y,
+        visible: true
+      });
       if (isDrawing) {
-        setCurrentPath(prev => [...prev, { x, y }]);
+        setCurrentPath(prev => [...prev, {
+          x,
+          y
+        }]);
       }
     }
   }, [isMasking, isDrawing]);
-
   const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isMasking) return;
-    
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
-    
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
     setIsDrawing(true);
-    setCurrentPath([{ x, y }]);
+    setCurrentPath([{
+      x,
+      y
+    }]);
   }, [isMasking]);
-
   const handleCanvasMouseUp = useCallback(() => {
     if (!isMasking || !isDrawing) return;
-    
     setIsDrawing(false);
     if (currentPath.length > 0) {
       setMaskPaths(prev => [...prev, currentPath]);
       setCurrentPath([]);
     }
   }, [isMasking, isDrawing, currentPath]);
-
   const handleCanvasMouseLeave = useCallback(() => {
-    setBrushPosition(prev => ({ ...prev, visible: false }));
+    setBrushPosition(prev => ({
+      ...prev,
+      visible: false
+    }));
     if (isDrawing) {
       setIsDrawing(false);
       if (currentPath.length > 0) {
@@ -312,115 +338,68 @@ export function ImageEditorDialog({
           {/* Left side - Canvas (60%) */}
           <div className="flex-1 relative flex items-center justify-center bg-slate-100 p-8">
             {(() => {
-              const { displayWidth, displayHeight } = getCanvasPreviewDimensions();
-              const { imageDisplayWidth, imageDisplayHeight } = getImagePositioning();
-              
-              return (
-                <div className="relative">
+            const {
+              displayWidth,
+              displayHeight
+            } = getCanvasPreviewDimensions();
+            const {
+              imageDisplayWidth,
+              imageDisplayHeight
+            } = getImagePositioning();
+            return <div className="relative">
                   {/* Canvas container with target dimensions */}
-                  <div 
-                    ref={canvasRef}
-                    className="relative border-2 border-dashed border-gray-400 bg-white cursor-crosshair"
-                    style={{
-                      width: displayWidth,
-                      height: displayHeight,
-                      backgroundImage: `
+                  <div ref={canvasRef} className="relative border-2 border-dashed border-gray-400 bg-white cursor-crosshair" style={{
+                width: displayWidth,
+                height: displayHeight,
+                backgroundImage: `
                         linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
                         linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
                         linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
                         linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
                       `,
-                      backgroundSize: '20px 20px',
-                      backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
-                    }}
-                    onMouseMove={handleCanvasMouseMove}
-                    onMouseDown={handleCanvasMouseDown}
-                    onMouseUp={handleCanvasMouseUp}
-                    onMouseLeave={handleCanvasMouseLeave}
-                  >
+                backgroundSize: '20px 20px',
+                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+              }} onMouseMove={handleCanvasMouseMove} onMouseDown={handleCanvasMouseDown} onMouseUp={handleCanvasMouseUp} onMouseLeave={handleCanvasMouseLeave}>
                     {/* Original image centered within canvas */}
-                    <img 
-                      src={image.src} 
-                      alt={image.alt} 
-                      className="absolute pointer-events-none"
-                      style={{
-                        width: imageDisplayWidth,
-                        height: imageDisplayHeight,
-                        left: '50%',
-                        top: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        objectFit: 'contain',
-                        border: '2px solid rgba(0,0,0,0.1)'
-                      }} 
-                    />
+                    <img src={image.src} alt={image.alt} className="absolute pointer-events-none" style={{
+                  width: imageDisplayWidth,
+                  height: imageDisplayHeight,
+                  left: '50%',
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  objectFit: 'contain',
+                  border: '2px solid rgba(0,0,0,0.1)'
+                }} />
 
                     {/* Mask overlay */}
-                    <svg 
-                      className="absolute inset-0 pointer-events-none"
-                      style={{ width: '100%', height: '100%' }}
-                    >
+                    <svg className="absolute inset-0 pointer-events-none" style={{
+                  width: '100%',
+                  height: '100%'
+                }}>
                       {/* Completed mask paths */}
-                      {maskPaths.map((path, pathIndex) => (
-                        <g key={pathIndex}>
-                          <path
-                            d={`M ${path.map(point => `${point.x},${point.y}`).join(' L ')}`}
-                            stroke="rgba(255, 99, 132, 0.8)"
-                            strokeWidth={brushSize}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                          <path
-                            d={`M ${path.map(point => `${point.x},${point.y}`).join(' L ')}`}
-                            stroke="rgba(255, 99, 132, 0.3)"
-                            strokeWidth={Math.max(brushSize - 4, 1)}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                        </g>
-                      ))}
+                      {maskPaths.map((path, pathIndex) => <g key={pathIndex}>
+                          <path d={`M ${path.map(point => `${point.x},${point.y}`).join(' L ')}`} stroke="rgba(255, 99, 132, 0.8)" strokeWidth={brushSize} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                          <path d={`M ${path.map(point => `${point.x},${point.y}`).join(' L ')}`} stroke="rgba(255, 99, 132, 0.3)" strokeWidth={Math.max(brushSize - 4, 1)} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                        </g>)}
                       
                       {/* Current drawing path */}
-                      {currentPath.length > 1 && (
-                        <g>
-                          <path
-                            d={`M ${currentPath.map(point => `${point.x},${point.y}`).join(' L ')}`}
-                            stroke="rgba(255, 99, 132, 0.8)"
-                            strokeWidth={brushSize}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                          <path
-                            d={`M ${currentPath.map(point => `${point.x},${point.y}`).join(' L ')}`}
-                            stroke="rgba(255, 99, 132, 0.3)"
-                            strokeWidth={Math.max(brushSize - 4, 1)}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                        </g>
-                      )}
+                      {currentPath.length > 1 && <g>
+                          <path d={`M ${currentPath.map(point => `${point.x},${point.y}`).join(' L ')}`} stroke="rgba(255, 99, 132, 0.8)" strokeWidth={brushSize} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                          <path d={`M ${currentPath.map(point => `${point.x},${point.y}`).join(' L ')}`} stroke="rgba(255, 99, 132, 0.3)" strokeWidth={Math.max(brushSize - 4, 1)} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                        </g>}
                     </svg>
 
                     {/* Brush cursor */}
-                    {isMasking && brushPosition.visible && (
-                      <div
-                        className="absolute pointer-events-none border-2 border-red-400 rounded-full"
-                        style={{
-                          width: `${brushSize}px`,
-                          height: `${brushSize}px`,
-                          left: brushPosition.x - brushSize / 2,
-                          top: brushPosition.y - brushSize / 2,
-                          backgroundColor: 'rgba(255, 99, 132, 0.2)'
-                        }}
-                      />
-                    )}
+                    {isMasking && brushPosition.visible && <div className="absolute pointer-events-none border-2 border-red-400 rounded-full" style={{
+                  width: `${brushSize}px`,
+                  height: `${brushSize}px`,
+                  left: brushPosition.x - brushSize / 2,
+                  top: brushPosition.y - brushSize / 2,
+                  backgroundColor: 'rgba(255, 99, 132, 0.2)'
+                }} />}
                   </div>
-                </div>
-              );
-            })()}
+                </div>;
+          })()}
 
             {/* Dimension display */}
             <div className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-1 rounded text-sm">
@@ -459,13 +438,10 @@ export function ImageEditorDialog({
                           {ratio.label}
                         </Button>)}
                     </div>
-                    <Button 
-                      className="w-full"
-                      onClick={() => {
-                        onExpand(targetDimensions, image);
-                        onClose();
-                      }}
-                    >
+                    <Button className="w-full" onClick={() => {
+                    onExpand(targetDimensions, image);
+                    onClose();
+                  }}>
                       Expand Image
                     </Button>
                   </CollapsibleContent>
@@ -496,13 +472,13 @@ export function ImageEditorDialog({
                         </div>
                       </div>
                     </div>
-                    <Button 
-                      className="w-full"
-                      onClick={() => {
-                        onExpand({ width: customWidth, height: customHeight }, image);
-                        onClose();
-                      }}
-                    >
+                    <Button className="w-full" onClick={() => {
+                    onExpand({
+                      width: customWidth,
+                      height: customHeight
+                    }, image);
+                    onClose();
+                  }}>
                       Expand Image
                     </Button>
                   </CollapsibleContent>
@@ -511,10 +487,7 @@ export function ImageEditorDialog({
 
               {/* Content Editing Section */}
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Content Editing</h3>
-                  <Separator />
-                </div>
+                
                 
                 {/* Content Editing Section */}
                 <Collapsible open={isContentEditingOpen} onOpenChange={handleContentEditingToggle}>
@@ -532,21 +505,10 @@ export function ImageEditorDialog({
                     {/* Masking controls */}
                     <div className="space-y-3">
                       <div className="flex gap-2">
-                        <Button
-                          variant={isMasking ? "default" : "outline"}
-                          size="sm"
-                          onClick={handleStartMasking}
-                          className="flex-1"
-                        >
+                        <Button variant={isMasking ? "default" : "outline"} size="sm" onClick={handleStartMasking} className="flex-1">
                           {isMasking ? "Stop Masking" : "Start Masking"}
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleClearMask}
-                          disabled={!hasMask}
-                          className="flex-1"
-                        >
+                        <Button variant="outline" size="sm" onClick={handleClearMask} disabled={!hasMask} className="flex-1">
                           Clear Mask
                         </Button>
                       </div>
@@ -555,7 +517,7 @@ export function ImageEditorDialog({
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Brush size</label>
                         <div className="flex items-center gap-3">
-                          <Slider value={[brushSize]} onValueChange={(v) => setBrushSize(v[0])} min={4} max={100} step={1} className="flex-1" aria-label="Brush size" />
+                          <Slider value={[brushSize]} onValueChange={v => setBrushSize(v[0])} min={4} max={100} step={1} className="flex-1" aria-label="Brush size" />
                           <Badge variant="secondary">{brushSize}px</Badge>
                         </div>
                       </div>
@@ -564,17 +526,8 @@ export function ImageEditorDialog({
                       <div className="space-y-2">
                         <label className="text-sm font-medium">Generate content (optional)</label>
                         <div className="relative">
-                          <Textarea
-                            value={generativeFillPrompt}
-                            onChange={(e) => setGenerativeFillPrompt(e.target.value)}
-                            placeholder="Describe what you want to generate in the masked area..."
-                            className="w-full h-20 p-3 bg-muted rounded-lg border resize-none text-sm"
-                            maxLength={1000}
-                          />
-                          <Badge 
-                            variant="secondary" 
-                            className="absolute bottom-2 right-2 text-xs"
-                          >
+                          <Textarea value={generativeFillPrompt} onChange={e => setGenerativeFillPrompt(e.target.value)} placeholder="Describe what you want to generate in the masked area..." className="w-full h-20 p-3 bg-muted rounded-lg border resize-none text-sm" maxLength={1000} />
+                          <Badge variant="secondary" className="absolute bottom-2 right-2 text-xs">
                             {generativeFillPrompt.length}/1000
                           </Badge>
                         </div>
@@ -582,19 +535,10 @@ export function ImageEditorDialog({
                       
                       {/* Action buttons */}
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={handleErase}
-                          disabled={!hasMask}
-                        >
+                        <Button variant="outline" className="flex-1" onClick={handleErase} disabled={!hasMask}>
                           Erase
                         </Button>
-                        <Button
-                          className="flex-1"
-                          onClick={handleGenerate}
-                          disabled={!hasMask || !hasPrompt}
-                        >
+                        <Button className="flex-1" onClick={handleGenerate} disabled={!hasMask || !hasPrompt}>
                           Generate
                         </Button>
                       </div>
