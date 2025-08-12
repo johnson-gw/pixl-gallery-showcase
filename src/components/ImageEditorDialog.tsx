@@ -66,8 +66,7 @@ export function ImageEditorDialog({
 }: ImageEditorDialogProps) {
   const [isAspectRatioOpen, setIsAspectRatioOpen] = useState(true);
   const [isCustomSizeOpen, setIsCustomSizeOpen] = useState(false);
-  const [isEraseOpen, setIsEraseOpen] = useState(false);
-  const [isGenerativeFillOpen, setIsGenerativeFillOpen] = useState(false);
+  const [isContentEditingOpen, setIsContentEditingOpen] = useState(false);
   const [selectedRatio, setSelectedRatio] = useState<AspectRatioOption>(aspectRatios[0]);
   const [originalDimensions, setOriginalDimensions] = useState({
     width: 512,
@@ -167,8 +166,7 @@ export function ImageEditorDialog({
     setIsAspectRatioOpen(!isAspectRatioOpen);
     if (!isAspectRatioOpen) {
       setIsCustomSizeOpen(false);
-      setIsEraseOpen(false);
-      setIsGenerativeFillOpen(false);
+      setIsContentEditingOpen(false);
     }
   };
   
@@ -176,35 +174,16 @@ export function ImageEditorDialog({
     setIsCustomSizeOpen(!isCustomSizeOpen);
     if (!isCustomSizeOpen) {
       setIsAspectRatioOpen(false);
-      setIsEraseOpen(false);
-      setIsGenerativeFillOpen(false);
+      setIsContentEditingOpen(false);
     }
   };
   
-  const handleEraseToggle = () => {
-    setIsEraseOpen(!isEraseOpen);
-    if (!isEraseOpen) {
+  const handleContentEditingToggle = () => {
+    setIsContentEditingOpen(!isContentEditingOpen);
+    if (!isContentEditingOpen) {
       setIsAspectRatioOpen(false);
       setIsCustomSizeOpen(false);
-      setIsGenerativeFillOpen(false);
-      // Reset canvas to original dimensions when switching to Erase
-      setTargetDimensions(originalDimensions);
-      setCustomWidth(originalDimensions.width);
-      setCustomHeight(originalDimensions.height);
-      // Clear any existing masks
-      setMaskPaths([]);
-      setCurrentPath([]);
-      setIsMasking(false);
-    }
-  };
-  
-  const handleGenerativeFillToggle = () => {
-    setIsGenerativeFillOpen(!isGenerativeFillOpen);
-    if (!isGenerativeFillOpen) {
-      setIsAspectRatioOpen(false);
-      setIsCustomSizeOpen(false);
-      setIsEraseOpen(false);
-      // Reset canvas to original dimensions when switching to Generative Fill
+      // Reset canvas to original dimensions when switching to Content Editing
       setTargetDimensions(originalDimensions);
       setCustomWidth(originalDimensions.width);
       setCustomHeight(originalDimensions.height);
@@ -537,17 +516,17 @@ export function ImageEditorDialog({
                   <Separator />
                 </div>
                 
-                {/* Erase Section */}
-                <Collapsible open={isEraseOpen} onOpenChange={handleEraseToggle}>
+                {/* Content Editing Section */}
+                <Collapsible open={isContentEditingOpen} onOpenChange={handleContentEditingToggle}>
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" className="w-full justify-between p-0 h-auto">
-                      <span className="text-base font-medium">Erase</span>
-                      {isEraseOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      <span className="text-base font-medium">Content Editing</span>
+                      {isContentEditingOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-4 pt-4">
                     <div className="text-sm text-muted-foreground">
-                      Remove objects from your image by masking them while preserving the background.
+                      Remove or add content to your image by masking areas and choosing your action.
                     </div>
                     
                     {/* Masking controls */}
@@ -581,63 +560,9 @@ export function ImageEditorDialog({
                         </div>
                       </div>
                       
-                      <Button
-                        className="w-full"
-                        onClick={handleErase}
-                        disabled={!hasMask}
-                      >
-                        Erase
-                      </Button>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-
-                {/* Generative Fill Section */}
-                <Collapsible open={isGenerativeFillOpen} onOpenChange={handleGenerativeFillToggle}>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-between p-0 h-auto">
-                      <span className="text-base font-medium">Generative Fill</span>
-                      {isGenerativeFillOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-4 pt-4">
-                    <div className="text-sm text-muted-foreground">
-                      Add new content to selected areas using AI, maintaining the overall image context.
-                    </div>
-                    
-                    {/* Masking controls */}
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <Button
-                          variant={isMasking ? "default" : "outline"}
-                          size="sm"
-                          onClick={handleStartMasking}
-                          className="flex-1"
-                        >
-                          {isMasking ? "Stop Masking" : "Start Masking"}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleClearMask}
-                          disabled={!hasMask}
-                          className="flex-1"
-                        >
-                          Clear Mask
-                        </Button>
-                      </div>
-                      
-                      {/* Brush size controller */}
+                      {/* Prompt textarea for Generative Fill */}
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Brush size</label>
-                        <div className="flex items-center gap-3">
-                          <Slider value={[brushSize]} onValueChange={(v) => setBrushSize(v[0])} min={4} max={100} step={1} className="flex-1" aria-label="Brush size" />
-                          <Badge variant="secondary">{brushSize}px</Badge>
-                        </div>
-                      </div>
-                      
-                      {/* Prompt textarea */}
-                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Generate content (optional)</label>
                         <div className="relative">
                           <Textarea
                             value={generativeFillPrompt}
@@ -655,13 +580,24 @@ export function ImageEditorDialog({
                         </div>
                       </div>
                       
-                      <Button
-                        className="w-full"
-                        onClick={handleGenerate}
-                        disabled={!hasMask || !hasPrompt}
-                      >
-                        Generate
-                      </Button>
+                      {/* Action buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={handleErase}
+                          disabled={!hasMask}
+                        >
+                          Erase
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          onClick={handleGenerate}
+                          disabled={!hasMask || !hasPrompt}
+                        >
+                          Generate
+                        </Button>
+                      </div>
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
