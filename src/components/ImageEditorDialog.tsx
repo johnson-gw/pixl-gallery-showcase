@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 interface ImageEditorDialogProps {
   isOpen: boolean;
@@ -85,6 +86,7 @@ export function ImageEditorDialog({
   const [currentPath, setCurrentPath] = useState<{x: number, y: number}[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushPosition, setBrushPosition] = useState({ x: 0, y: 0, visible: false });
+  const [brushSize, setBrushSize] = useState<number>(20);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Generative Fill state
@@ -384,7 +386,7 @@ export function ImageEditorDialog({
                           <path
                             d={`M ${path.map(point => `${point.x},${point.y}`).join(' L ')}`}
                             stroke="rgba(255, 99, 132, 0.8)"
-                            strokeWidth="20"
+                            strokeWidth={brushSize}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             fill="none"
@@ -392,7 +394,7 @@ export function ImageEditorDialog({
                           <path
                             d={`M ${path.map(point => `${point.x},${point.y}`).join(' L ')}`}
                             stroke="rgba(255, 99, 132, 0.3)"
-                            strokeWidth="16"
+                            strokeWidth={Math.max(brushSize - 4, 1)}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             fill="none"
@@ -406,7 +408,7 @@ export function ImageEditorDialog({
                           <path
                             d={`M ${currentPath.map(point => `${point.x},${point.y}`).join(' L ')}`}
                             stroke="rgba(255, 99, 132, 0.8)"
-                            strokeWidth="20"
+                            strokeWidth={brushSize}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             fill="none"
@@ -414,7 +416,7 @@ export function ImageEditorDialog({
                           <path
                             d={`M ${currentPath.map(point => `${point.x},${point.y}`).join(' L ')}`}
                             stroke="rgba(255, 99, 132, 0.3)"
-                            strokeWidth="16"
+                            strokeWidth={Math.max(brushSize - 4, 1)}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             fill="none"
@@ -428,10 +430,10 @@ export function ImageEditorDialog({
                       <div
                         className="absolute pointer-events-none border-2 border-red-400 rounded-full"
                         style={{
-                          width: '20px',
-                          height: '20px',
-                          left: brushPosition.x - 10,
-                          top: brushPosition.y - 10,
+                          width: `${brushSize}px`,
+                          height: `${brushSize}px`,
+                          left: brushPosition.x - brushSize / 2,
+                          top: brushPosition.y - brushSize / 2,
                           backgroundColor: 'rgba(255, 99, 132, 0.2)'
                         }}
                       />
@@ -570,6 +572,15 @@ export function ImageEditorDialog({
                         </Button>
                       </div>
                       
+                      {/* Brush size controller */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Brush size</label>
+                        <div className="flex items-center gap-3">
+                          <Slider value={[brushSize]} onValueChange={(v) => setBrushSize(v[0])} min={4} max={100} step={1} className="flex-1" aria-label="Brush size" />
+                          <Badge variant="secondary">{brushSize}px</Badge>
+                        </div>
+                      </div>
+                      
                       <Button
                         className="w-full"
                         onClick={handleErase}
@@ -614,6 +625,15 @@ export function ImageEditorDialog({
                         >
                           Clear Mask
                         </Button>
+                      </div>
+                      
+                      {/* Brush size controller */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Brush size</label>
+                        <div className="flex items-center gap-3">
+                          <Slider value={[brushSize]} onValueChange={(v) => setBrushSize(v[0])} min={4} max={100} step={1} className="flex-1" aria-label="Brush size" />
+                          <Badge variant="secondary">{brushSize}px</Badge>
+                        </div>
                       </div>
                       
                       {/* Prompt textarea */}
